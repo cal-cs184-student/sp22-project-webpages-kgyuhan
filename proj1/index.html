@@ -48,20 +48,21 @@
 <p> The rest of the supersampling algorithm is implemented in resolve_to_framebuffer(). For each pixel in the framebuffer (of size width * height), we traverse the sample_buffer (of size width * height * sample_rate) in blocks of size sqrt(sample_rate) * sqrt(sample_rate), storing the sum of each color channel. We then take the average and assign that color to the corresponding pixel in the framebuffer.<p>
 <p>To account for managing supersample buffer memory, I modified set_sample_rate(), set_framebuffer_target(), to resize the sample_buffer to (width * height * sample_rate)<p>
 <p>I modified fill_pixel() to set Color c to the index [y * width * sqrt(sample_rate) + x] in the sample_buffer. I also modified rasterize_point() to fill all the super samples corresponding to the point with the same color so that in resolve_to_framebuffer(), the point comes out as a single sampled pixel.<p>
+<div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/task2_1.png" align="middle" width="600px"/>
+        <img src="images/task2_1.png" align="middle" width="500px"/>
         <figcaption align="middle">sample rate = 1.</figcaption>
       </td>
       <td>
-        <img src="images/task2_4.png" align="middle" width="600px"/>
+        <img src="images/task2_4.png" align="middle" width="500px"/>
         <figcaption align="middle">sample rate = 4.</figcaption>
       </td>
     </tr>
   </table>
 <div align="middle">
-  <img src="images/task2_16.png" align="middle" width="600px"/>
+  <img src="images/task2_16.png" align="middle" width="500px"/>
   <figcaption align="middle">sample rate = 16.</figcaption>
 
 <br><br><br><br>
@@ -88,21 +89,21 @@
 <table style="width=100%">
   <tr>
     <td>
-      <img src="images/task5_nearest1.png" align="middle" width="600px"/>
+      <img src="images/task5_nearest1.png" align="middle" width="500px"/>
       <figcaption align="middle">nearest sampling at 1 sample per pixel</figcaption>
     </td>
     <td>
-      <img src="images/task5_nearest16.png" align="middle" width="600px"/>
+      <img src="images/task5_nearest16.png" align="middle" width="500px"/>
       <figcaption align="middle">nearest sampling at 16 samples per pixel</figcaption>
     </td>
   </tr>
   <tr>
     <td>
-      <img src="images/task5_bilinear1.png" align="middle" width="600px"/>
+      <img src="images/task5_bilinear1.png" align="middle" width="500px"/>
       <figcaption align="middle">bilinear sampling at 1 sample per pixel</figcaption>
     </td>
     <td>
-      <img src="images/task5_bilinear16.png" align="middle" width="600px"/>
+      <img src="images/task5_bilinear16.png" align="middle" width="500px"/>
       <figcaption align="middle">bilinear sampling at 16 samples per pixel</figcaption>
     </td>
   </tr>
@@ -119,21 +120,21 @@
 <table style="width=100%">
   <tr>
     <td>
-      <img src="images/Lzero_Pnearest.png" align="middle" width="600px"/>
+      <img src="images/Lzero_Pnearest.png" align="middle" width="500px"/>
       <figcaption align="middle">L_ZERO P_NEAREST</figcaption>
     </td>
     <td>
-      <img src="images/Lzero_Plinear.png" align="middle" width="600px"/>
+      <img src="images/Lzero_Plinear.png" align="middle" width="500px"/>
       <figcaption align="middle">L_ZERO P_LINEAR</figcaption>
     </td>
   </tr>
   <tr>
     <td>
-      <img src="images/Lnearest_Pnearest.png" align="middle" width="600px"/>
+      <img src="images/Lnearest_Pnearest.png" align="middle" width="500px"/>
       <figcaption align="middle">L_NEAREST P_NEAREST</figcaption>
     </td>
     <td>
-      <img src="images/Lnearest_Plinear.png" align="middle" width="600px"/>
+      <img src="images/Lnearest_Plinear.png" align="middle" width="500px"/>
       <figcaption align="middle">L_NEAREST P_LINEAR</figcaption>
     </td>
   </tr>
