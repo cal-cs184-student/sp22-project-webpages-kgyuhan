@@ -1,7 +1,229 @@
 <html>
 	<head>
+        <style>
+          body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: 'Open Sans', sans-serif;
+            color: #121212;
+          }
+          h1, h2, h3, h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+          }
+        </style>
+        <title>CS 184 MeshEdit</title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 	</head>
+    
+    
 	<body>
-		Project 2 here
-	</body>
+        <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+        <h1 align="middle">Project 2: MeshEdit</h1>
+        <h2 align="middle">Katherine Yuhan</h2>
+        
+        <br><br><br>
+        
+        <h2 align="middle">Overview</h2>
+        
+        <p>In this assignment, I worked on ideas of mesh representations and geometric modeling. In Section 1: Bezier Curves and Surfaces, I used deCastelijau’s algorithm to evaluate and model smooth Bezier curves and surfaces. In Section 2: Triangle Meshes and Half-Edge Data Structure, I worked with 3D geometric models represented by triangle meshes and the half-edge data structure. I implemented area-weighted vertex normals to achieve smooth surface shading. I also implemented the local mesh operations edge flip and edge split which are used in loop subdivision. Lastly, I implemented mesh upsampling using loop subdivision in order to achieve a smoother, higher resolution polygon mesh.</p>
+        
+        <br><br><br><br>
+        
+        <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+        <h3 align="middle">Part 1: Bexier curves with 1D deCasteljau subdivision</h3>
+        <p>deCasteljau’s algorithm is a way to evaluate Bezier curves. Given n control points, we can linearly interpolate with the parameter t using lerp(p^i, p^i+1, t) = (1 - t)p^i + tp^i+1 to get n-1 points. We do this step recursively until we reach the single, final point which lies on the Bezier curve.</p>
+        <p>I implemented this in BezierCurve::evaluateStep(...), where each call to this function performs one step of the algorithm. If the given parameter of 2D vector points contains a single point, this is the final interpolated vector and we return points. Otherwise, for each pair of adjacent points, we linearly interpolate using the lerp formula and parameter t. We then use pushback() to add elements to our vector of intermediate points. We return the 2D vector of intermediate points containing n-1 interpolated vectors. </p>
+        
+        <div align="middle">
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task1_1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">original control points</figcaption>
+                </td>
+                <td>
+                    <img src="images/task1_2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">step 1</figcaption>
+                </td>
+            <tr>
+                <td>
+                    <img src="images/task1_3.png" align="middle" width="500px"/>
+                    <figcaption align="middle">step 2</figcaption>
+                </td>
+                <td>
+                    <img src="images/task1_4.png" align="middle" width="500px"/>
+                    <figcaption align="middle">step 3</figcaption>
+                </td>
+            <tr>
+                <td>
+                    <img src="images/task1_5.png" align="middle" width="500px"/>
+                    <figcaption align="middle">step 4</figcaption>
+                </td>
+            <tr>
+        </table>
+        </div>
+        <img src="images/task1_6.png" align="middle" width="1000px"/>
+        <figcaption align="middle">final Bezier curve</figcaption>
+        <br><br>
+        <img src="images/task1_7.png" align="middle" width="1000px"/>
+        <figcaption align="middle">Bezier curve with different control points and parameter t</figcaption>
+
+        <br><br><br><br>
+        
+        <h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
+        <p>deCasteljau’s algorithm extends to Bezier surfaces by evaluating patches. Given i sets of n control points, we can use deCasteljau’s algorithm to evaluate i points, where each point lies on the Bezier curve at the parameter u defined by each set of control points. We then use these i interpolated points to act as control points to evaluate the final interpolated point on the Bezier curve at the parameter v. This final point lies on the Bezier surface corresponding to parameters (u,v).</p>
+        <p>In my implementation, we start with BezierPatch::evaluate(...) which takes in the parameters u and v. We will use controlPoints which is a nxn grid of 3D vectors, where each row defines a Bezier curve. For each row in controlPoints, we will perform deCasteljau’s algorithm, calling BezierPatch::evaluateStep(...) recursively until we get the final interpolated vector which lies on the Bezier curve defined by row i of control points at parameter u. We then add this vector to a vector of evaluated 3D points evaluatedRows. Once we have evaluated the i rows, we call BezierPatch::evaluate1D(...) on evaluatedRows to perform deCasteljau’s algorithm, calling BezierPatch::evaluateStep(...) recursively until we get the final interpolated vector which lies on the Bezier curve defined by the points interpolated for each row at parameter v.</p>
+        
+        <img src="images/task2.png" align="middle" width="1000px"/>
+        <figcaption align="middle">screenshot of bez/teapot.bez</figcaption>
+        
+        <br><br><br><br>
+        
+        <h2 align="middle">Section II: Triangle Meshes and Half-Edge Data Structure</h2>
+
+        <h3 align="middle">Part 3: Area-weighted vertex normals</h3>
+        
+        <p>I implemented area weighted vertex normals in Vertex::normal(). We iterate through each face incident to the given vertex by going to h->twin()->next() after every iteration until we reach the original halfedge. For each face, we get the positions of the three vertices. Then we get the weighted normal of the face by adding together the cross products of each pair of vertices in a counterclockwise winding order, then normalizing the sum. After the iterative steps, we normalize the sum of all the area weighted normals with .unit() to get the unit normal of the given vertex.</p>
+        
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task3_1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae without vertex normals</figcaption>
+                </td>
+                <td>
+                    <img src="images/task3_2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae with vertex normals</figcaption>
+                </td>
+            <tr>
+        </table>
+                
+        <br><br><br><br>
+        
+        <h3 align="middle">Part 4: Edge flip</h3>
+        
+        <p>I implemented the edge flip operation in HalfedgeMesh::flipEdge(...). If the given edge is a boundary edge, we return immediately. Otherwise, we get pointers to all the elements in the unmodified mesh – all edges, halfedges, vertices, and faces. According to the diagram below, we then reassign each vertex, edge, and face to point to the correct halfedge in the flipped mesh. For each halfedge, we reassign its next, twin, vertex, edge, and face to the correct pointer in the flipped mesh . Finally, we return the flipped edge.</p>
+        <img src="images/task4_0.png" align="middle" width="1000px"/>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task4_1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae before edge flips</figcaption>
+                </td>
+                <td>
+                    <img src="images/task4_2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae after edge flips</figcaption>
+                </td>
+            <tr>
+        </table>
+        
+        <br><br><br><br>
+        
+        <h3 align="middle">Part 5: Edge split</h3>
+        
+        <p>I implemented the edge split operation in HalfedgeMesh::splitEdge(...). If the given edge is a boundary edge, we return immediately. Otherwise, we get pointers to all the elements in the unmodified mesh – all edges, halfedges, vertices, and faces. We create new elements as needed – one new vertex, three new edges, two new faces, and 6 new halfedges. According to the diagram below, we then reassign each vertex, edge, and fact to point to the correct halfedge in the split mesh. For each halfedge we reassign its next, twin, vertex, edge, and fact to the correct pointer in the split mesh (according to the diagram below). Finally we return the newly inserted vertex.</p>
+        <img src="images/task5_0.png" align="middle" width="1000px"/>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task5_1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae before edge splits and flips</figcaption>
+                </td>
+                <td>
+                    <img src="images/task5_2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae after edge splits and flips</figcaption>
+                </td>
+            <tr>
+        </table>
+        
+        <br><br><br><br>
+        
+        <h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+        
+        <p>I implemented loop subdivision in MeshResampler::upsample(...). </p>
+        <p>First, we compute each vertex’s updated positions.
+        For all old vertices in the input mesh, we calculate their new positions using the formula (1 - n * u) * original_position + u * original_neighbor_position_sum, where n is the degree of the vertex and u is 3/16 if n = 3 and 3/8n otherwise. This new position is stored in Vertex::newPosition, and we also mark each vertex as old by setting Vertex::isNew to false.
+        Each new vertex will split an existing edge. So, to calculate the updated positions of newly inserted vertices, we iterate through each old edge in the mesh and compute the position as 3/8 * (A + B) + 1/8 * (C + D), where A and B are vertex positions incident to the edge, and C and D are vertex positions that complete the triangles incident to the edge. This new position is stored in Edge::newPosition, and we also mark each edge as old.</p>
+        <p>Next, we iterate through every edge in the original mesh (by checking if this edge is not new and that both vertices incident to the edge are not new). We split each edge with HalfedgeMesh::splitEdge(...), mark the newly created vertex as new, transfer Edge::newPosition to Vertex::newPosition, and mark each new edge as new (edges resulting from splitting the original edge should be marked as not new).</p>
+        <p>Next, we iterate through all the edges. If the edge is new and connects an old vertex to a new vertex, we flip the edge with HalfedgeMesh::flipEdge(...).</p>
+        <p>Lastly, we iterate through all the vertices and copy each Vertex::newPosition into Vertex::Position.</p>
+        
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task6_1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cow.dae</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cow.dae after 1 iteration of loop subdivision</figcaption>
+                </td>
+            <tr>
+        </table>
+        <br><br>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task6_4.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_6.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/teapot.dae after 2 iterations of loop subdivision</figcaption>
+                </td>
+            <tr>
+        </table>
+        <p align="middle">After loop subdivision, meshes appear smoother. Sharp edges and corners become rounder and less harsh.</p>
+        <br><br>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task6_7.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cube.dae</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_8.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cube.dae after 1 iteration of loop subdivision</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/task6_9.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cube.dae after 2 iterations of loop subdivision</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_10.png" align="middle" width="500px"/>
+                    <figcaption align="middle">dae/cube.dae after 3 iterations of loop subdivision</figcaption>
+                </td>
+            <tr>
+        </table>
+        <p>After multiple iterations of loop subdivision, the cube becomes slightly asymmetric. This is because the edges in the original mesh are, themselves, asymmetrical. If we pre-process the cube by splitting the diagonal edges on each face so each face, and thus the original mesh, is symmetric (as shown below) we can see that the cube will now subdivide symmetrically.</p>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/task6_12.png" align="middle" width="500px"/>
+                    <figcaption align="middle">pre-processed dae/cube.dae</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_13.png" align="middle" width="500px"/>
+                    <figcaption align="middle">pre-processed dae/cube.dae after 1 iteration of loop subdivision</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/task6_14.png" align="middle" width="500px"/>
+                    <figcaption align="middle">pre-processed dae/cube.dae after 2 iterations of loop subdivision</figcaption>
+                </td>
+                <td>
+                    <img src="images/task6_15.png" align="middle" width="500px"/>
+                    <figcaption align="middle">pre-processed dae/cube.dae after 3 iterations of loop subdivision</figcaption>
+                </td>
+            <tr>
+        </table>
+    </body>
 </html>
