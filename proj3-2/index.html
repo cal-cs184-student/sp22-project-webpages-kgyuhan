@@ -1,7 +1,147 @@
 <html>
-	<head>
-	</head>
+    <head>
+        <style>
+          body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: 'Open Sans', sans-serif;
+            color: #121212;
+          }
+          h1, h2, h3, h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+          }
+        </style>
+        <title>CS 184 MeshEdit</title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+    </head>
 	<body>
-		Project 3-2 here
+        <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+        <h1 align="middle">Project 3-2: Pathtracer</h1>
+        <h2 align="middle">Katherine Yuhan</h2>
+        
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/spheres_m100.png" align="middle" width="300px"/>
+                </td>
+                <td>
+                    <img src="images/dragon_au_0.25.png" align="middle" width="300px"/>
+                </td>
+                <td>
+                    <img src="images/bunny_cu_imp.png" align="middle" width="300px"/>
+                </td>
+            <tr>
+        </table></center>
+        <h2 align="middle">Overview</h2>
+        <p>In this project, I expanded upon the physically based ray tracer renderer from the previous project to include more complicated materials – mirror and glass using reflection and refraction, and metals using microfacet theory.</p>
+        
+        <br><br><br>
+        
+        <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+        <p>I implemented mirror and glass materials with reflection and refraction. The reflect function takes in a direction wo and returns a reflected direction wi about the normal (0,0,1). For mirror material, we reflect wo to get wi and return reflectance / |cos(wi)|.</p>
+        <p>The refraction function takes in a direction wo and returns the wi direction that results from refraction. If wo is exiting the object, eta = ior. If wo is entering, eta = 1/ior. If the following is true, we have internal reflection and refraction does not occur. </p>
+        <center><img src="images/tir.png" align="middle" width="150px"/></center>
+        <p>Otherwise, we set wi according to the following and return true.</p>
+        <center><img src="images/wi_coor.png" align="middle" width="550px"/></center>
+        <p>For glass material, we combine reflection and refraction. If there is internal reflection, we reflect wo, set the pdf to 1, and return reflectance / |cos(wi)|. Otherwise, we compute Schlick’s reflection coefficient R using the following.</p>
+        <center><img src="images/shlick.png" align="middle" width="250px"/></center>
+        <p>Schlick’s approximation gives us a coin flip probability to determine whether we reflect (reflect wo, set the pdf to R, return reflectance / |cos(wi)|) or refract (refract wo, set the pdf to 1 - R, return (1 - R) * transmittance / |cos(wi)| / eta^2).</p>
+        <br><br>
+        <p>The following images were rendered with 64 samples per pixel, 4 sample per light, and varying maximum ray depths.</p>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/spheres_m0.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 0</figcaption>
+                </td>
+                <td>
+                    <img src="images/spheres_m1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 1</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/spheres_m2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 2</figcaption>
+                </td>
+                <td>
+                    <img src="images/spheres_m3.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 3</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/spheres_m4.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 4</figcaption>
+                </td>
+                <td>
+                    <img src="images/spheres_m5.png" align="middle" width="500px"/>
+                    <figcaption align="middle">maximum ray depth = 5</figcaption>
+                </td>
+            <tr>
+        </table>
+        <center><img src="images/spheres_m100.png" align="middle" width="500px"/>
+        <figcaption align="middle">maximum ray depth = 100</figcaption></center>
+        <p>With a maximum ray depth of 0, we can only make out the light source which is directly emitting light. At m=1, we can now see the cornell box, but not the spheres themselves, illuminated by the light source. At m = 2, light bounces off the spheres and we can see the mirrored material, but the glass material remains dark, as there are not enough bounces to go through the sphere. At m = 3, both the mirror and glass materials show up, but the reflection of the glass sphere in the mirrored reflection remains dark. As we increase the maximum ray depth and allow more bounces of light, we start to see where the glass sphere refracts light onto the ground, onto the blue wall, and we can see more clearly the reflection of the glass sphere in the mirrored surface.</p>
+        
+        <br><br><br><br>
+        
+        <h2 align="middle">Part 1: Microfacet Material</h2>
+        <p>To implement microfacet materials to render isotropic rough conductors that reflect light. For microfaced materials, BRDF = </p>
+        <center><img src="images/brdf.png" align="middle" width="250px"/></center>
+        <p>where F is the Fresnel term, G is the shadowing-masking term, and D is the normal distribution function. n is the macro surface normal (0,0,1), and h is the half vector.</p>
+        <p>To get the NDF, we adopt Beckmann distribution where</p>
+        <center><img src="images/ndf.png" align="middle" width="200px"/></center>
+        <p>To get the Fresnel term, we use</p>
+        <center><img src="images/fresnel.png" align="middle" width="300px"/></center>
+        <p>Next, we implement importance sampling where the microfacet BRDF is sampled according to the shape of the Beckmann NDF. We sample theta_h and phi_h according to the pdfs p_theta and p_phi using the inversion method. From theta_h and phi_h, we can get the sampled microfacet normal h. To get the sampled wi, we reflect wo according to h. We also compute the pdf of sampling wi with respect to the solid angle. Finally, we return the sampled BRDF value.</p>
+        <br><br>
+        <p>The following images were rendered with 128 samples per pixel, 1 sample per light, maximum ray depth of 5, and varying alpha values.</p>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/dragon_au_0.005.png" align="middle" width="500px"/>
+                    <figcaption align="middle">alpha = 0.005</figcaption>
+                </td>
+                <td>
+                    <img src="images/dragon_au_0.05.png" align="middle" width="500px"/>
+                    <figcaption align="middle">alpha = 0.05</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/dragon_au_0.25.png" align="middle" width="500px"/>
+                    <figcaption align="middle">alpha = 0.25</figcaption>
+                </td>
+                <td>
+                    <img src="images/dragon_au_0.5.png" align="middle" width="500px"/>
+                    <figcaption align="middle">alpha = 0.5</figcaption>
+                </td>
+            <tr>
+        </table>
+        <p>The alpha value determines the roughness of the material. In the images above, we can see that smaller alpha values make the object appear more glossy and shiny. As we increase the alpha value, the material becomes smoother and more diffuse.</p>
+        <br><br>
+        <p>The following images were rendered with 64 samples per pixel, 1 sample per light, and maximum ray depth of 5.</p>
+        <table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/bunny_cu_hem.png" align="middle" width="500px"/>
+                    <figcaption align="middle">Cosine hemisphere sampling</figcaption>
+                </td>
+                <td>
+                    <img src="images/bunny_cu_imp.png" align="middle" width="500px"/>
+                    <figcaption align="middle">Importance sampling</figcaption>
+                </td>
+            <tr>
+        </table>
+        <p>We can see that cosine hemisphere sampling on a microfacet BRDF produces a much noisier image than importance sampling. Cosine hemisphere sampling works for sampling diffuse BRDF’s, but is not appropriate for sampling our microfacet BRDF which uses the Beckmann distribution.</p>
+        <br><br>
+        <p>The following image was rendered with 128 samples per pixel, 1 sample per light, maximum ray depth of 5, and apha value of 0.5.  I changed the eta and k values to create a platinum material.</p>
+        <center><img src="images/dragon_pt.png" align="middle" width="500px"/>
+        <figcaption align="middle">Platinum dragon</figcaption></center>
 	</body>
 </html>
