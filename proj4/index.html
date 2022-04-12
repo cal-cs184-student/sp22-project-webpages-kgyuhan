@@ -14,7 +14,7 @@
             font-family: 'Source Sans Pro', sans-serif;
           }
         </style>
-        <title>CS 184 MeshEdit</title>
+        <title>CS 184 ClothSim</title>
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 	</head>
@@ -23,10 +23,24 @@
         <h1 align="middle">Project 4: ClothSim</h1>
         <h2 align="middle">Katherine Yuhan</h2>
         
-        <br><br><br>
-        
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/2_damp0_3.png" align="middle" width="250px"/>
+                </td>
+                <td>
+                    <img src="images/3_ks5000.png" align="middle" width="250px"/>
+                </td>
+                <td>
+                    <img src="images/4_density12.png" align="middle" width="250px"/>
+                </td>
+                <td>
+                    <img src="images/5_disp1.png" align="middle" width="250px"/>
+                </td>
+            <tr>
+        </table></center>
         <h2 align="middle">Overview</h2>
-        <p></p>
+        <p>In this project, I implemented a cloth simulator. I used a system of masses and springs to represent cloth. Using this structure, I applied numerical integration on the physical equations of motion in order to simulate the movement of cloth over time. I also handled collisions with other objects as well as self-collision using spatial hashing. Lastly, I implemented GLSL shaders to provide various material and lighting effects in real time.</p>
         
         <br><br><br>
         
@@ -54,7 +68,8 @@
         <p>First, we compute the total force – which includes external forces and spring correction forces – acting on each point mass. Using Newton's 2nd law, we can compute and apply the total external force to every point mass based on the external acclerations and the mass of the cloth. Next, we apply the spring correction forces. For each enabled spring, we can compute the force applied to the two point masses using Hooke's law, then apply this force to one point mass and an equal, but opposite force to the other point mass.</p>
         <p>Next, we can use Verlet integration to perform numerical integration and compute each point mass's change in position between time steps.</p>
         <p>Finally, we implement a constraint such that any spring's length is at most 10% greater than its rest length at the end of any time step. In order to satisfy this constraint, if a spring is to be stretched beyond 10% of it's rest length, we can apply a correction to either one or both point masses connected to the spring (based on if the point masses are pinned). This prevents the cloth from being unreasonably deformed.</p>
-        
+        <br>
+        <h3 align="middle">Varying ks</h3>
         <p>The spring constant ks determines a springs' stiffness. A lower value for ks yields a stretchier cloth whereas a higher value for ks results in a stiffer cloth.</p>
         <center><table style="width=100%">
             <tr>
@@ -68,7 +83,9 @@
                 </td>
             <tr>
         </table></center>
-        <p>Varying the density</p>
+        <br><br><br>
+        <h3 align="middle">Varying Density</h3>
+        <p>Varying the density determines the mass and contributes to how external forces will affect the cloth. A lower value for density makes the cloth appear lighter while a higher value for density results in a heavier cloth which will be pulled more down by gravity.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
@@ -81,70 +98,145 @@
                 </td>
             <tr>
         </table></center>
-        <p>damping? "</p>
+        <br><br><br>
+        <h3 align="middle">Varying Damping</h3>
+        <p>Damping affects the loss of energy. The rows below shows the progression of a cloth falling with 0% damping (top) and 1% damping (bottom). A damping percentage of 0 means there will be no energy lost, resulting in more movement and swaying of the cloth. Alternatively, a damping percentage of 1 means that the all of the energy is lost, so the cloth falls slowly and smoothly.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
-                    <img src="images/2_damp1_1.png" align="middle" width="500px"/>
+                    <img src="images/2_damp0_1.png" align="middle" width="330px"/>
                 </td>
                 <td>
-                    <img src="images/2_damp0_1.png" align="middle" width="500px"/>
-                </td>
-            <tr>
-            <tr>
-                <td>
-                    <img src="images/2_damp1_2.png" align="middle" width="500px"/>
+                    <img src="images/2_damp0_2.png" align="middle" width="330px"/>
+                    
                 </td>
                 <td>
-                    <img src="images/2_damp0_2.png" align="middle" width="500px"/>
-                </td>
-            <tr>
-            <tr>
-                <td>
-                    <img src="images/2_damp1_3.png" align="middle" width="500px"/>
-                    <figcaption align="middle">damping = 1%</figcaption>
-                </td>
-                <td>
-                    <img src="images/2_damp0_3.png" align="middle" width="500px"/>
-                    <figcaption align="middle">damping = 0%</figcaption>
+                    <img src="images/2_damp0_3.png" align="middle" width="330px"/>
                 </td>
             <tr>
         </table></center>
+        <figcaption align="middle">damping = 0%</figcaption>
+        <br><br>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/2_damp1_1.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/2_damp1_2.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/2_damp1_3.png" align="middle" width="330px"/>
+                </td>
+            <tr>
+        </table></center>
+        <figcaption align="middle">damping = 1%</figcaption>
+        <br><br>
         <center><img src="images/2_pinned4.png" align="middle" width="800px"/>
         <figcaption align="middle">final resting state with default parameters</figcaption></cener>
         <br><br><br><br>
         
         <h2 align="middle">Part 3: Handling Collisions with Other Objects</h2>
-        <p></p>
-        <p>describe the differences in results ks</p>
+        <h3 align="middle">Collisions with spheres</h3>
+        <p>To handle sphere collision, if a point mass intersects with or is inside the given sphere, then we apply a correction vector to the position in order to bump the point mass to the sphere's surface. The correction vector is the vector needed to be applied to the point mass's last position in order to reach the tangent point – the point where the point mass should have intersected the sphere. The point mass's new position is its last position adjusted by the correction vector, scaled down by friction.</p>
+        <br>
+        <p>A lower value for the spring constant ks results in a stretchier cloth, causing the cloth to drape down further over the sphere. As we increase the value of ks, the cloth becomes stiffer.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
-                    <img src="images/3_ks500.png" align="middle" width="330px"/>
+                    <img src="images/3_ks500.png" align="middle" width="500px"/>
                     <figcaption align="middle">ks = 500 N/m</figcaption>
                 </td>
                 <td>
-                    <img src="images/3_ks5000.png" align="middle" width="330px"/>
+                    <img src="images/3_ks5000.png" align="middle" width="500px"/>
                     <figcaption align="middle">ks = 5000 N/m</figcaption>
-                </td>
-                <td>
-                    <img src="images/3_ks50000.png" align="middle" width="330px"/>
-                    <figcaption align="middle">ks = 50000 N/m</figcaption>
                 </td>
             <tr>
         </table></center>
-        <center><img src="images/3_plane.png" align="middle" width="800px"/></center>
+        <center><img src="images/3_ks50000.png" align="middle" width="500px"/>
+        <figcaption align="middle">ks = 50000 N/m</figcaption></center>
+        <br><br><br>
+        <h3 align="middle">Collisions with planes</h3>
+        <p>To handle plane collision, if a point mass is inside the given plane (it has crossed through the plane in the last time step), then we apply a correction vector to the position in order to bump the point mass to correct side of the plane. The correction vector is the vector needed to be applied to the point mass's last position in order to reach the tangent point – the point where the point mass should have intersected the plane – adjusted by a small surface offset constant. The point mass's new position is its last position adjusted by the correction vector, scaled down by friction.</p>
+        <center><img src="images/3_plane.png" align="middle" width="600px"/></center>
         <br><br><br><br>
         
         <h2 align="middle">Part 4: Handling Self-Collisions</h2>
-        <p>Vary the density as well as ks and describe with words and screenshots how they affect the behavior of the cloth as it falls on itself.</p>
+        <p>To handle self collision, we implement spatial hashing. At each time step, we build a hash table that maps a point mass to a unique key which represents a 3D box volume. For each point mass, we can use the map to look up the 3D box volume and the candidate point masses that share the box. For each candidate, we can apply a correction vector so that the point mass and its candidate are at most 2 * thickness distance apart. </p>
+        <br>
+        <h3 align="middle">Varying ks</h3>
+        <p>As the spring coefficient ks increases, the cloth becomes stiffer, resulting in less wrinkles, less folds, and larger folds.</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/4_ks50001.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_ks50002.png" align="middle" width="330px"/>
+                    
+                </td>
+                <td>
+                    <img src="images/4_ks50003.png" align="middle" width="330px"/>
+                </td>
+            <tr>
+        </table></center>
+        <figcaption align="middle">ks = 5000 N/m</figcaption>
+        <br><br>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/4_ks500001.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_ks500002.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_ks500003.png" align="middle" width="330px"/>
+                </td>
+            <tr>
+        </table></center>
+        <figcaption align="middle">ks = 50000 N/m</figcaption>
+        
+        <br><br><br>
+        <h3 align="middle">Varying Density</h3>
+        <p>At a lower density, the cloth is smoother and has larger folds as it falls on itself. On the other hand, a higher density results in a more wrinkly cloth with many small folds.</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/4_density11.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_density12.png" align="middle" width="330px"/>
+                    
+                </td>
+                <td>
+                    <img src="images/4_density13.png" align="middle" width="330px"/>
+                </td>
+            <tr>
+        </table></center>
+        <figcaption align="middle">density = 1 g/cm^2</figcaption>
+        <br><br>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/4_density301.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_density302.png" align="middle" width="330px"/>
+                </td>
+                <td>
+                    <img src="images/4_density303.png" align="middle" width="330px"/>
+                </td>
+            <tr>
+        </table></center>
+        <figcaption align="middle">density = 30 g/cm^2</figcaption>
         <br><br><br><br>
         
         <h2 align="middle">Part 5: Shaders</h2>
-        <p>Explain in your own words what is a shader program and how vertex and fragment shaders work together to create lighting and material effects.</p>
-        
+        <p>Shaders run in parallel on the GPU, allowing us to execute sections of the graphics  pipeline. GLSL shaders output a single 4D vector in order to create lighting and material effects. Vertex shaders apply transforms to vertices and modify their geometric properties. Fragment shaders take in geometric attriutes (outputted by a vertex shader) to compute the color for each fragment.</p>
+        <br>
         <h3 align="middle">Blinn-Phong Shading</h3>
-        <p>Explain the Blinn-Phong shading model in your own words. </p>
+        <p>The Blinn-Phong shading model combines ambient lighting, diffuse lighting, and specular highlight components to efficiently approximate realistic lighting.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
@@ -170,10 +262,21 @@
         
         <br><br><br>
         <h3 align="middle">Texture Mapping</h3>
+        <p>To produce a texture mapped object, we can sample from the texture at the inputted texture space coordinate to output the sampled spectrum as the fragment's color.</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/5_tex1.png" align="middle" width="500px"/>
+                </td>
+                <td>
+                    <img src="images/5_tex2.png" align="middle" width="500px"/>
+                </td>
+            <tr>
+        </table></center>
         
         <br><br><br>
         <h3 align="middle">Bump and Displacement Mapping</h3>
-        <p>Compare the two approaches and resulting renders in your own words</p>
+        <p>Bump mapping allows us to give the illusion of detail on an object. To achieve this, we modify the surface normals of an object according to a height map. Displacement mapping gives a similar effect. However, in addition to modifying surface normals, displacement mapping also modifies the vertex positions of an object. We can see below that the objects with bump mapping retain the smooth silhouette of the original object whereas the objects with displacement mapping have bumpy edges according to the texture.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
@@ -196,7 +299,8 @@
                     </td>
                 <tr>
         </table></center>
-        <p>Compare how your the two shaders react to the sphere by changing the sphere mesh's coarseness </p>
+        <br><br><br>
+        <p>For bump mapping, varying the coarseness has little effect. However, for displacement mapping, increasing the coarseness results in more detailed displacements around the edge of the object.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
@@ -221,6 +325,7 @@
         </table></center>
         <br><br><br>
         <h3 align="middle">Environment-mapped Reflections</h3>
+        <p>For a mirror material, we can approximate the incoming radiance sample using an environment map by reflecting the outgoing eye ray across the surface normal and then sampling the environment map for that incoming direction.</p>
         <center><table style="width=100%">
             <tr>
                 <td>
