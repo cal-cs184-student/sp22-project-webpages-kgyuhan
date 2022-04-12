@@ -1,7 +1,237 @@
 <html>
 	<head>
+        <style>
+          body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: 'Open Sans', sans-serif;
+            color: #121212;
+          }
+          h1, h2, h3, h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+          }
+        </style>
+        <title>CS 184 MeshEdit</title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 	</head>
 	<body>
-		Project 4 here
+        <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+        <h1 align="middle">Project 4: ClothSim</h1>
+        <h2 align="middle">Katherine Yuhan</h2>
+        
+        <br><br><br>
+        
+        <h2 align="middle">Overview</h2>
+        <p></p>
+        
+        <br><br><br>
+        
+        <h2 align="middle">Part 1: Masses and Springs</h2>
+        <p>Our cloth model will be represented using a grid of point masses connected with springs. First, we need to create an evenly spaced grid of masses of a specified number of with and height points. Depending on the orientation of the cloth, we will vary positions over either the xz plane (for horizontal) or xy plane (for vertical). Next, we add three types of springs – structural, shearing, and bending. Each spring connects two point masses based on the type of constraint – structural springs connect neighboring point masses, shearing springs connect diagonal neighboring point masses, and bending springs connect point masses which are two away from each other.</p>
+        <center><img src="images/1_all.png" align="middle" width="800px"/>
+            <figcaption align="middle">wireframe with all constraints enabled</figcaption></center>
+        <br><br>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/1_no_shear.png" align="middle" width="500px"/>
+                    <figcaption align="middle">no shearing constraints</figcaption>
+                </td>
+                <td>
+                    <img src="images/1_only_shear.png" align="middle" width="500px"/>
+                    <figcaption align="middle">shearing constraints only</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        <br><br><br><br>
+        
+        <h2 align="middle">Part 2: Simulation via Numerical Integration</h2>
+        <p>In order to simulate the cloth's motion, we need figure out how our cloth's point masses move from one time step to the next by evaluating the physical equations of motion on the cloth's point masses and springs.</p>
+        <p>First, we compute the total force – which includes external forces and spring correction forces – acting on each point mass. Using Newton's 2nd law, we can compute and apply the total external force to every point mass based on the external acclerations and the mass of the cloth. Next, we apply the spring correction forces. For each enabled spring, we can compute the force applied to the two point masses using Hooke's law, then apply this force to one point mass and an equal, but opposite force to the other point mass.</p>
+        <p>Next, we can use Verlet integration to perform numerical integration and compute each point mass's change in position between time steps.</p>
+        <p>Finally, we implement a constraint such that any spring's length is at most 10% greater than its rest length at the end of any time step. In order to satisfy this constraint, if a spring is to be stretched beyond 10% of it's rest length, we can apply a correction to either one or both point masses connected to the spring (based on if the point masses are pinned). This prevents the cloth from being unreasonably deformed.</p>
+        
+        <p>The spring constant ks determines a springs' stiffness. A lower value for ks yields a stretchier cloth whereas a higher value for ks results in a stiffer cloth.</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/2_ks500.png" align="middle" width="500px"/>
+                    <figcaption align="middle">ks = 500 N/m</figcaption>
+                </td>
+                <td>
+                    <img src="images/2_ks50000.png" align="middle" width="500px"/>
+                    <figcaption align="middle">ks = 50000 N/m</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        <p>Varying the density</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/2_density1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">density = 1 g/cm^2</figcaption>
+                </td>
+                <td>
+                    <img src="images/2_density50.png" align="middle" width="500px"/>
+                    <figcaption align="middle">density = 50 g/cm^2</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        <p>damping? "</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/2_damp1_1.png" align="middle" width="500px"/>
+                </td>
+                <td>
+                    <img src="images/2_damp0_1.png" align="middle" width="500px"/>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/2_damp1_2.png" align="middle" width="500px"/>
+                </td>
+                <td>
+                    <img src="images/2_damp0_2.png" align="middle" width="500px"/>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/2_damp1_3.png" align="middle" width="500px"/>
+                    <figcaption align="middle">damping = 1%</figcaption>
+                </td>
+                <td>
+                    <img src="images/2_damp0_3.png" align="middle" width="500px"/>
+                    <figcaption align="middle">damping = 0%</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        <center><img src="images/2_pinned4.png" align="middle" width="800px"/>
+        <figcaption align="middle">final resting state with default parameters</figcaption></cener>
+        <br><br><br><br>
+        
+        <h2 align="middle">Part 3: Handling Collisions with Other Objects</h2>
+        <p></p>
+        <p>describe the differences in results ks</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/3_ks500.png" align="middle" width="330px"/>
+                    <figcaption align="middle">ks = 500 N/m</figcaption>
+                </td>
+                <td>
+                    <img src="images/3_ks5000.png" align="middle" width="330px"/>
+                    <figcaption align="middle">ks = 5000 N/m</figcaption>
+                </td>
+                <td>
+                    <img src="images/3_ks50000.png" align="middle" width="330px"/>
+                    <figcaption align="middle">ks = 50000 N/m</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        <center><img src="images/3_plane.png" align="middle" width="800px"/></center>
+        <br><br><br><br>
+        
+        <h2 align="middle">Part 4: Handling Self-Collisions</h2>
+        <p>Vary the density as well as ks and describe with words and screenshots how they affect the behavior of the cloth as it falls on itself.</p>
+        <br><br><br><br>
+        
+        <h2 align="middle">Part 5: Shaders</h2>
+        <p>Explain in your own words what is a shader program and how vertex and fragment shaders work together to create lighting and material effects.</p>
+        
+        <h3 align="middle">Blinn-Phong Shading</h3>
+        <p>Explain the Blinn-Phong shading model in your own words. </p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/5_phong_a.png" align="middle" width="500px"/>
+                    <figcaption align="middle">ambient component</figcaption>
+                </td>
+                <td>
+                    <img src="images/5_phong_d.png" align="middle" width="500px"/>
+                    <figcaption align="middle">diffuse component</figcaption>
+                </td>
+            <tr>
+            <tr>
+                <td>
+                    <img src="images/5_phong_s.png" align="middle" width="500px"/>
+                    <figcaption align="middle">specular component</figcaption>
+                </td>
+                <td>
+                    <img src="images/5_phong.png" align="middle" width="500px"/>
+                    <figcaption align="middle">Blinn-Phong shading with all components</figcaption>
+                </td>
+            <tr>
+        </table></center>
+        
+        <br><br><br>
+        <h3 align="middle">Texture Mapping</h3>
+        
+        <br><br><br>
+        <h3 align="middle">Bump and Displacement Mapping</h3>
+        <p>Compare the two approaches and resulting renders in your own words</p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/5_bump1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">bump mapping</figcaption>
+                </td>
+                <td>
+                    <img src="images/5_disp1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">displacement mapping</figcaption>
+                </td>
+            <tr>
+                <tr>
+                    <td>
+                        <img src="images/5_bump2.png" align="middle" width="500px"/>
+                        <figcaption align="middle">bump mapping</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/5_disp2.png" align="middle" width="500px"/>
+                        <figcaption align="middle">displacement mapping</figcaption>
+                    </td>
+                <tr>
+        </table></center>
+        <p>Compare how your the two shaders react to the sphere by changing the sphere mesh's coarseness </p>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/5_bump_coarse16.png" align="middle" width="500px"/>
+                    <figcaption align="middle">bump mapping with coarseness 16</figcaption>
+                </td>
+                <td>
+                    <img src="images/5_bump_coarse128.png" align="middle" width="500px"/>
+                    <figcaption align="middle">bump mapping with coarseness 128</figcaption>
+                </td>
+            <tr>
+                <tr>
+                    <td>
+                        <img src="images/5_disp_coarse16.png" align="middle" width="500px"/>
+                        <figcaption align="middle">displacement mapping with coarseness 16</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/5_disp_coarse128.png" align="middle" width="500px"/>
+                        <figcaption align="middle">displacement mapping with coarseness 128</figcaption>
+                    </td>
+                <tr>
+        </table></center>
+        <br><br><br>
+        <h3 align="middle">Environment-mapped Reflections</h3>
+        <center><table style="width=100%">
+            <tr>
+                <td>
+                    <img src="images/5_mirror1.png" align="middle" width="500px"/>
+                    <figcaption align="middle">bump mapping with coarseness 16</figcaption>
+                </td>
+                <td>
+                    <img src="images/5_mirror2.png" align="middle" width="500px"/>
+                    <figcaption align="middle">bump mapping with coarseness 128</figcaption>
+                </td>
+            <tr>
+        </table></center>
 	</body>
 </html>
